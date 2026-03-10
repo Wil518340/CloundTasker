@@ -41,7 +41,7 @@ async def create_task(
     """Create a new task."""
     try:
         return firestore.create_task(user_id, task.title)
-    except Exception as e:
+    except Exception:
         logger.exception("Create task failed")
         raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -53,7 +53,7 @@ async def list_tasks(
     """List all tasks for a user."""
     try:
         return firestore.list_tasks(user_id)
-    except Exception as e:
+    except Exception:
         logger.exception("List tasks failed")
         raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -71,7 +71,7 @@ async def get_task(
         return task
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         logger.exception("Get task failed")
         raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -94,7 +94,7 @@ async def toggle_task_completion(
         return updated
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         logger.exception("Toggle task failed")
         raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -112,7 +112,7 @@ async def delete_task(
         return None  # 204 No Content
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         logger.exception("Delete task failed")
         raise HTTPException(status_code=500, detail="Internal server error")
 

@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from app.firestore import FirestoreService, Task
-from app.config import settings
+#from app.config import settings
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

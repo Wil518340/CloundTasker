@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 from google.cloud import firestore
-from google.cloud.firestore import ArrayRemove, ArrayUnion
+#from google.cloud.firestore import ArrayRemove, ArrayUnion
 from pydantic import BaseModel
 from app.config import settings
 

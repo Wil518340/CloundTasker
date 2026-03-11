@@ -10,7 +10,6 @@ env:
   PYTHON_VERSION: '3.12'
 
 jobs:
-  
   test:
     runs-on: ubuntu-latest
     steps:
@@ -36,30 +35,54 @@ jobs:
       id-token: 'write'
     steps:
       - uses: actions/checkout@v4
+
+      # 1. Authenticate to GCP using Workload Identity
       - name: Auth to GCP
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      # 2. Set up Cloud SDK (gcloud)
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
+
+      # 3. Debug: verify active account, token, and Docker config
+      - name: Debug GCP Auth
+        run: |
+          echo "=== Active gcloud account ==="
+          gcloud auth list
+          echo "=== Access token (first 50 chars) ==="
+          gcloud auth print-access-token | head -c 50
+          echo ""
+          echo "=== Docker credential helper config ==="
+          cat ~/.docker/config.json | grep -A2 us-central1-docker.pkg.dev || echo "No entry found"
+
+      # 4. Ensure the Artifact Registry repository exists (create if missing)
+      - name: Ensure Artifact Registry repository exists
+        run: |
+          gcloud artifacts repositories create cloudtasker \
+            --repository-format=docker \
+            --location=us-central1 \
+            --verbosity=error || echo "Repository already exists or creation skipped"
+
+      # 5. Configure Docker to use gcloud as credential helper
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      # 6. Fallback: direct Docker login using an access token
+      - name: Direct Docker login (fallback)
+        run: |
+          gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
+
+      # 7. Build and push the Docker image
       - name: Build & Push Docker
         run: |
           IMAGE=us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloudtasker/cloudtasker:latest
-          gcloud auth configure-docker us-central1-docker.pkg.dev
           docker build -t $IMAGE .
           docker push $IMAGE
-      - name: Debug GCP Auth
-        run: |
-          echo "Active gcloud accounts:"
-          gcloud auth list
 
-          echo "Access token preview:"
-          gcloud auth print-access-token | head -c 50
-
-          echo ""
-          echo "Docker credential config:"
-          cat ~/.docker/config.json
+      # 8. Deploy to Cloud Run
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy cloudtasker \

@@ -49,6 +49,17 @@ jobs:
           gcloud auth configure-docker us-central1-docker.pkg.dev
           docker build -t $IMAGE .
           docker push $IMAGE
+      - name: Debug GCP Auth
+        run: |
+          echo "Active gcloud accounts:"
+          gcloud auth list
+
+          echo "Access token preview:"
+          gcloud auth print-access-token | head -c 50
+
+          echo ""
+          echo "Docker credential config:"
+          cat ~/.docker/config.json
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy cloudtasker \
